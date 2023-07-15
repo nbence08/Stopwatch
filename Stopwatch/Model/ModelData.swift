@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 
+@MainActor
 final class ModelData: ObservableObject {
     @Published var measuredTimes: [NamedDuration] = []
     
@@ -34,7 +35,7 @@ final class ModelData: ObservableObject {
         self.measuredTimes = measuredTimes
     }
     
-    func saveMeasuredTíimes() async throws {
+    func saveMeasuredTimes() async throws {
         let task = Task {
             let fileURL = try Self.measuredTimesURL()
             let data = try JSONEncoder().encode(measuredTimes)

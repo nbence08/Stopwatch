@@ -11,6 +11,6 @@ struct NamedDuration: Identifiable, Codable {
     let id: String  //guid
     
     let name: String
-    let time: Date
+    let time: TimeInterval
     let timeStamp: Date
 }

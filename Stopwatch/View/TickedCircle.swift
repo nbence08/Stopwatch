@@ -17,7 +17,7 @@ struct TickedCircle: View {
     
     var body: some View {
         GeometryReader { geometry in
-            let width = min(geometry.size.width, geometry.size.height)
+            let width = geometry.size.width
             let center = CGPoint(x: width/2, y: radius)
             
             let smallTickWidth = max(radius / 300, 0.5)
@@ -29,6 +29,7 @@ struct TickedCircle: View {
                 .stroke(style: StrokeStyle(lineWidth: 2))
                 .frame(width: 2 * radius)
                 .padding(.leading, width/2 - radius)
+                .scaledToFill()
             
             ForEach(smallTickAngles, id: \.magnitude) {angle in
                 RactangularClockTick(angle: angle,
@@ -48,8 +49,7 @@ struct TickedCircle: View {
             }
         }
         .foregroundColor(.primary)
-        .scaledToFit()
-        .frame(minWidth: 2 * radius, maxHeight: 2 * radius)
+        .frame(minHeight: radius*2)
     }
 }
 

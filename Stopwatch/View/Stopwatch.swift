@@ -8,6 +8,14 @@
 import SwiftUI
 import Dispatch
 
+func structureTimeInterval(timeInterval: TimeInterval) -> (Int, Int, Int) {
+    let seconds: Int = Int(timeInterval)
+    let minutes = seconds / 60
+    let hours = minutes / 60
+    let truncatedSeconds = seconds % 60
+    return (Int(truncatedSeconds), minutes, Int(hours))
+}
+
 struct Stopwatch: View {
     @State var startTime: Date = Date.now
     
@@ -19,39 +27,40 @@ struct Stopwatch: View {
     
     @State var counterString: String = "00:00:00"
     
+    @EnvironmentObject var modelData: ModelData
+        
     private let formatter = DateComponentsFormatter()
-    
-    
-    func structureTimeInterval(timeInterval: TimeInterval) -> (Int, Int, Int) {
-        let seconds: Int = Int(timeInterval)
-        let minutes = seconds / 60
-        let hours = minutes / 60
-        let truncatedSeconds = seconds % 60
-        return (Int(truncatedSeconds), minutes, Int(hours))
-    }
-    
     
     func updateTimerRecursively() {
         let updateTimerRecursivelyClosure = {
             formatter.allowedUnits = [.hour, .minute, .second]
             formatter.zeroFormattingBehavior = .pad
             
-            var (seconds, minutes, hours) = structureTimeInterval(timeInterval: Date.now.timeIntervalSince(startTime))
+            let (seconds, minutes, hours) = structureTimeInterval(timeInterval: Date.now.timeIntervalSince(startTime))
             self.seconds = Double(seconds)
             self.minutes = Double(minutes)
             self.hours = Double(hours)
             
             counterString = formatter.string(from: startTime, to: Date.now)!
-            if(counting) {
+            if counting {
                 updateTimerRecursively()
+            } else {
+                modelData.measuredTimes.append(
+                    NamedDuration(
+                        id: UUID().uuidString,
+                        name: "measuredTime #\(modelData.measuredTimes.count)",
+                        time: Date.now.timeIntervalSince(startTime),
+                        timeStamp: Date.now
+                    )
+                )
+                modelData.objectWillChange.send()
             }
         }
         DispatchQueue.global(qos: .userInteractive).async (execute: updateTimerRecursivelyClosure)
-        
     }
     
     var body: some View {
-        VStack {
+        VStack(alignment: .center) {
             /*Text("Stopwatch")
                 .font(.title)
                 .padding(.top)
@@ -64,8 +73,18 @@ struct Stopwatch: View {
                 minutes: $minutes,
                 hours: $hours
             )
+            .padding(.bottom)
+            
+            Divider()
+            
+            ScrollView {
+                ForEach (modelData.measuredTimes) { namedDuration in
+                    NamedDurationView(namedDuration: namedDuration)
+                }
+            }
             
             Spacer()
+            .scaledToFit()
             
             if(!counting) {
                 Button("START", action: {
@@ -73,15 +92,16 @@ struct Stopwatch: View {
                     startTime = Date.now
                     DispatchQueue.global(qos: .userInteractive).async (execute: updateTimerRecursively)
                 })
-                
+                .buttonStyle(.borderedProminent)
             } else {
                 Button("STOP", action: {
                     self.counting = false
                 })
+                .buttonStyle(.borderedProminent)
             }
+            
+            Spacer()
         }
-        .scaledToFill()
-        .frame(width: 300)
         .navigationTitle("Stopwatch")
         //.navigationBarTitleDisplayMode(.inline)
     }
@@ -90,5 +110,6 @@ struct Stopwatch: View {
 struct Stopwatch_Previews: PreviewProvider {
     static var previews: some View {
         Stopwatch()
+            .environmentObject(ModelData())
     }
 }
